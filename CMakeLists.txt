@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.16)
+# ESP-IDF 6.1, Ziel: ESP32 ("Ur-ESP32", esp32-Chiprevision, nicht S2/S3/C3)
+set(IDF_TARGET esp32)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(ESP32_PCSK225)
