@@ -9,7 +9,7 @@ Standard-C++17, keine Plattformabhängigkeiten) - portiert wurde nur die
 Audio-Eingangskette (ADC statt WAV-Datei) und die Ausgabe (serielle Konsole
 statt stdout).
 
-## Warum ADC und nicht "einfach AM"?
+## Warum SSB und nicht "einfach AM"?
 
 PL225 ist eine **Phasenmodulation**, keine Amplitudentastung. Ein normaler
 Hüllkurven-AM-Empfang zerstört die Phaseninformation unwiderruflich (siehe
