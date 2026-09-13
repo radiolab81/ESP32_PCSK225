@@ -1,6 +1,6 @@
 # PL225 / PCSK225 (e-CzasPL) Dekoder für den Ur-ESP32
 
-Testportierung des PL225-Dekoders aus [Timesignal_decoder](.) auf den
+Testportierung des PL225-Dekoders aus [Timesignal_decoder](https://github.com/radiolab81/Timesignal_decoder) auf den
 Original-ESP32 (Xtensa, ESP-IDF 6.1). Die eigentliche Dekoder-/DSP-Logik
 (`main/pl225/*`) ist **unverändert** aus dem PC-Projekt übernommen (reines
 Standard-C++17, keine Plattformabhängigkeiten) - portiert wurde nur die
