@@ -9,7 +9,7 @@ standard C++17, no platform dependencies) — only the audio input chain
 (ADC instead of a WAV file) and the output (serial console instead of
 stdout) have been ported.
 
-## Why ADC and not "just AM"?
+## Why SSB and not "just AM"?
 
 PL225 is a **phase-modulation** scheme, not on-off keying. Conventional
 envelope AM reception irrecoverably destroys the phase information (see
