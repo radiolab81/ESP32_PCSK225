@@ -1,67 +1,70 @@
-# PL225 / PCSK225 (e-CzasPL) Dekoder für den Ur-ESP32
+🇬🇧 English | [🇩🇪 Deutsch](README.de.md)
 
-Testportierung des PL225-Dekoders aus [Timesignal_decoder](https://github.com/radiolab81/Timesignal_decoder) auf den
-Original-ESP32 (Xtensa, ESP-IDF 6.1). Die eigentliche Dekoder-/DSP-Logik
-(`main/pl225/*`) ist **unverändert** aus dem PC-Projekt übernommen (reines
-Standard-C++17, keine Plattformabhängigkeiten) - portiert wurde nur die
-Audio-Eingangskette (ADC statt WAV-Datei) und die Ausgabe (serielle Konsole
-statt stdout).
+# PL225 / PCSK225 (e-CzasPL) Decoder for the Original ESP32
 
-## Warum ADC und nicht "einfach AM"?
+Test port of the PL225 decoder from [Timesignal_decoder](https://github.com/radiolab81/Timesignal_decoder) to the
+original ESP32 (Xtensa, ESP-IDF 6.1). The actual decoder/DSP logic
+(`main/pl225/*`) is carried over **unchanged** from the PC project (plain
+standard C++17, no platform dependencies) — only the audio input chain
+(ADC instead of a WAV file) and the output (serial console instead of
+stdout) have been ported.
 
-PL225 ist eine **Phasenmodulation**, keine Amplitudentastung. Ein normaler
-Hüllkurven-AM-Empfang zerstört die Phaseninformation unwiderruflich (siehe
-`main/pl225/pl225_decoder.hpp`, Kopfkommentar). Es wird daher ein **SSB-
-Empfänger** benötigt (z.B. Empfang auf 224 kHz USB oder ein SI4732 im
-SSB-Modus), dessen NF-/Kopfhörerausgang den 225-kHz-Träger als stabilen
-Ton bei der eingestellten BFO-Frequenz (hier per Default 1000 Hz)
-ausgibt. Dieser Ton enthält die Phasenmodulation weiterhin vollständig -
-genau das nutzt `MonoToIqDownconverter` (ebenfalls unverändert aus dem
-Originalprojekt übernommen), um daraus per Software-BFO-Mischung wieder
-ein komplexes Basisband-IQ-Signal zu gewinnen, das dann exakt wie im
-PC-Projekt an `Pl225Decoder::processBlock()` geht.
+## Why ADC and not "just AM"?
+
+PL225 is a **phase-modulation** scheme, not on-off keying. Conventional
+envelope AM reception irrecoverably destroys the phase information (see
+the header comment in `main/pl225/pl225_decoder.hpp`). An **SSB
+receiver** is therefore required (e.g. reception on 224 kHz USB, or an
+SI4732 in SSB mode), whose audio/headphone output presents the 225 kHz
+carrier as a stable tone at the configured BFO frequency (1000 Hz by
+default here). This tone still contains the phase modulation in full —
+which is exactly what `MonoToIqDownconverter` (likewise carried over
+unchanged from the original project) exploits, recovering a complex
+baseband IQ signal via a software BFO mix, which is then fed to
+`Pl225Decoder::processBlock()` exactly as in the PC project.
 
 ## Hardware
 
-- **Ur-ESP32** (Original-Xtensa-ESP32; ESP32-S2/S3/C3 haben andere
-  ADC-Peripherie und sind mit diesem Code nicht getestet).
-- NF-Eingang: **GPIO34 (ADC1, Kanal 6)**.
-- Der ESP32-ADC kann nur 0..~3,1V (unipolar) messen, das NF-Signal des
-  Empfängers ist aber bipolar. Nötig ist daher eine einfache
-  **AC-Kopplung + Vorspannung ("Bias-Tee")**
+- **Original ESP32** (Xtensa ESP32; the ESP32-S2/S3/C3 have different ADC
+  peripherals and have not been tested with this code).
 
-  Die Empfänger-Lautstärke so einstellen, dass der
-  Ton den ADC nicht übersteuert - die Firmware gibt alle 10s den
-  aktuellen DC-Mittelwert (Sollbereich: nahe 2048 von 4095) auf der
-  Konsole aus, damit sich die Beschaltung/Aussteuerung kontrollieren
-  lässt.
+- Audio input: **GPIO34 (ADC1, channel 6)**.
 
-## Bauen und flashen (ESP-IDF 6.1)
+- The ESP32's ADC can only measure 0..~3.1 V (unipolar), while the
+  receiver's audio signal is bipolar. A simple **AC coupling + bias
+  network ("bias tee")** is therefore required.
 
-```bash
+  Set the receiver volume so the tone does not overdrive the ADC — the
+  firmware prints the current DC average every 10 s on the console
+  (target range: near 2048 of 4095), allowing the circuit/drive level to
+  be monitored.
+
+## Building and flashing (ESP-IDF 6.1)
+
+```
 . $IDF_PATH/export.sh
 idf.py set-target esp32
 idf.py build
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 
-## Konfiguration
+## Configuration
 
 In `main/main.cpp`:
 
-- `kAdcChannel` / GPIO: welcher ADC1-Pin verwendet wird.
-- `kAdcSampleRateHz`: NF-Abtastrate (Default 20 kHz, reicht für den
-  50-Bit/s-PL225-Takt deutlich).
-- `kBfoFrequencyHz`: muss zur tatsächlich am Empfänger eingestellten
-  BFO-/Empfangsfrequenz passen (Default 1000 Hz, wie im PC-Projekt-Beispiel
-  `225kHz_IQ.wav`/README).
-- `kLowpassCutoffHz`: Tiefpass-Grenzfrequenz nach der Software-BFO-Mischung
-  (Default 300 Hz, wie im Original).
+- `kAdcChannel` / GPIO: which ADC1 pin is used.
+- `kAdcSampleRateHz`: audio sampling rate (default 20 kHz, comfortably
+  sufficient for the 50-bit/s PL225 rate).
+- `kBfoFrequencyHz`: must match the BFO/reception frequency actually set
+  on the receiver (default 1000 Hz, as in the PC project's
+  `225kHz_IQ.wav`/README example).
+- `kLowpassCutoffHz`: low-pass cutoff frequency after the software BFO
+  mixing stage (default 300 Hz, as in the original).
 
-## Ausgabe
+## Output
 
-Erfolgreich dekodierte Zeittelegramme erscheinen auf der seriellen Konsole
-(UART0, 115200 Baud), z.B.:
+Successfully decoded time telegrams appear on the serial console (UART0,
+115200 baud), e.g.:
 
 ```
 [PL225] Zeitpunkt dekodiert: 2026-09-05 06:22:42 UTC (Wochentag 6) TZ=+2h Status='Normalbetrieb'
@@ -87,15 +90,16 @@ I (340543) PL225: ADC DC-Bias ~ 1777 / 4095 (Soll: nahe 2048) | AC-Spitzenwert: 
 [PL225] Zeitpunkt dekodiert: 2026-09-05 06:24:03 UTC (Wochentag 6) TZ=+2h Status='Normalbetrieb'
 ```
 
-Dekodierfehler (unvollständige/nicht valide Rahmen) werden als Warnung
-(`ESP_LOGW`) ausgegeben; das ist im Dauerbetrieb normal (Frames kommen alle
-paar Sekunden, nicht jeder ist fehlerfrei/vollständig empfangbar).
+Decode errors (incomplete/invalid frames) are logged as warnings
+(`ESP_LOGW`); this is normal during continuous operation (frames arrive
+every few seconds, and not every one is received error-free/complete).
 
-## Bekannte Einschränkungen
+## Known limitations
 
-- Wie im PC-Original: der genaue Zeitbezug eines Frames ist laut PA3FWM
-  senderseitig auf 100-200ms genau - für eine Wanduhr unproblematisch, für
-  einen NTP-Server ungeeignet.
-- Reiner AM-Envelope-Empfang funktioniert grundsätzlich nicht (siehe oben) -
-  das ist keine Einschränkung dieser Portierung, sondern Signaltheorie.
-
+- As in the original PC project: according to PA3FWM, the exact time
+  reference of a frame is accurate to only 100–200 ms even at the
+  transmitter — unproblematic for a wall clock, unsuitable for an NTP
+  server.
+- Pure AM envelope reception fundamentally does not work (see above) —
+  this is not a limitation of this port, but a consequence of signal
+  theory.
